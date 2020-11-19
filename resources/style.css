@@ -96,7 +96,6 @@ p {
   position: absolute;
   bottom: 1rem;
   right: 1rem;
-/*   font-size: 1.25rem; */
   color: white;
   background: #333;
   padding: 5px 10px;
@@ -107,4 +106,100 @@ p {
 }
 #source span {
   color: #e6e6e6;
+}
+#axisGroup {
+  opacity: 0;
+}
+#axisGroup .tick text {
+  fill: #666;
+  font-size: .9rem;
+}
+#axisGroup .domain {
+  stroke: #999;
+}
+#axisGroup .tick line {
+  stroke: #999;
+  stroke-dasharray: 3 3;
+}
+.region {
+  stroke: #333;
+  stroke-width: .5;
+  opacity: 0;
+}
+.label {
+  font-family: "ABCSans Regular", "Arial", sans-serif;
+  font-size: .7rem;
+  display: none;
+  opacity: 0;
+}
+.label.visible {
+  display: block;
+}
+.axisLabel {
+  font-size: 1rem;
+  fill: #666;
+  font-family: "ABCSans Black", "Arial Black", sans-serif;
+  text-anchor: middle;
+}
+#chartTitle {
+  fill: #333;
+  font-size: 2rem;
+  text-anchor: middle;
+}
+.setosa {
+  fill: #375E97;
+}
+.versicolor {
+  fill: #FB6542
+}
+.virginica {
+  fill: #3F681C;
+}
+.legend {
+  opacity: 0;
+}
+.legendItem {
+  text-anchor: end;
+  font-size: 1.5rem;
+}
+#map, #mapSvg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+#map {
+  opacity: 0;
+}
+#mapLegend {
+  position: fixed;
+  right: 50px;
+  bottom: 50px;
+  border-radius: 10px;
+  width: 110px;
+  height: 50%;
+  background-color: rgba(28, 28, 28, .75);
+}
+#mapLegend rect {
+  stroke: white;
+  fill: url(#gradient);
+  opacity: .67;
+}
+#legendLabel {
+  text-anchor: end;
+  font-size: .9rem;
+  fill: white;
+  font-family: "ABCSans Regular", "Arial", sans-serif;
+}
+#legendAxisGroup .tick text {
+  fill: white;
+}
+#legendAxisGroup .tick line {
+  stroke: white;
+}
+#legendAxisGroup .domain {
+  stroke: none;
 }

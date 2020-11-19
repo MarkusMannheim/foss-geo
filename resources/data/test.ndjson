@@ -1,0 +1,11 @@
+Usage: ndjson-join [options] [expression₀ [expression₁]] <file₀> <file₁>
+
+Join two newline-delimited JSON streams into a stream of pairs.
+
+Options:
+  -V, --version                output the version number
+  -r, --require <name=module>  require a module (default: {"i":-1})
+  --left                       perform a left join
+  --right                      perform a right join
+  --outer                      perform an outer join
+  -h, --help                   output usage information

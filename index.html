@@ -21,11 +21,14 @@
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <link href="./resources/style.css" rel="stylesheet">
     <link href="./resources/abcLogo64.png" rel="icon">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css' rel='stylesheet'>
   </head>
 
   <body>
     <!-- Initial page layout -->
     <div id="container"></div>
+    <div id="map"></div>
     <svg id="canvas"></svg>
     <div id="narration"></div>
     <div id="source"></div>
@@ -35,11 +38,12 @@
       Promise.all([
         d3.json("./resources/data/world.topojson"),
         d3.csv("./resources/data/education.csv"),
-        d3.csv("./resources/data/iris.csv")
+        d3.csv("./resources/data/iris.csv"),
+        d3.json("./resources/data/actDensity.topojson")
       ]).then(function(data) {
           // format data
           worldData = topojson.feature(data[0], data[0].objects.countries);
-          educationData = data[1]
+          deathData = data[1]
             .map(function(d) {
               d.rate = +d.rate;
               d.uni = +d.uni;
@@ -53,6 +57,7 @@
               }
               return d;
             });
+          actDensity = topojson.feature(data[3], data[3].objects.areas);
           // page elements
           container = d3.select("#container");
           canvas = d3.select("#canvas");
@@ -90,9 +95,11 @@
         click == 4 ? nextExample() :
         click == 5 ? nextExample() :
         click == 6 ? nextExample() :
-        // click == 12 ? removeImage() :
-        // click == 13 ? removeImage() :
-        // click == 14 ? bestPractice() :
+        click == 7 ? drawDeaths() :
+        click == 8 ? drawIris() :
+        click == 9 ? drawMap() :
+        click == 10 ? switchToStreets() :
+        click == 11 ? switchToDark() :
         // click == 15 ? bars() :
         // click == 16 ? scatter() :
         console.log(click);
@@ -102,7 +109,6 @@
         let dimensions = document.getElementById("container").getBoundingClientRect();
         width = dimensions.width;
         height = dimensions.height;
-        console.log(width, height);
       }
 
       function drawPlanet() {
@@ -139,7 +145,7 @@
             .attr("d", path);
         });
 
-        writeNarration("<h1>Markus Mannheim</h1><p>data journalist</p><p>ABC Canberra</p>");
+        writeNarration("<h1>Markus Mannheim</h1><p>ABC Canberra</p>");
       }
 
       function writeNarration(html) {
@@ -154,7 +160,10 @@
         planet.transition()
           .duration(2000)
           .style("opacity", 0)
-          .remove();
+          .remove()
+          .on("end", function() {
+            planetSpin.stop();
+          });
         narration.transition()
           .duration(2000)
           .style("opacity", 0)
@@ -214,6 +223,355 @@
           });
       }
 
+      function drawDeaths() {
+        if (thisExample.node().naturalWidth / thisExample.node().naturalHeight > ratio) {
+          thisExample.transition()
+            .duration(1000)
+            .style("width", "0%")
+            .on("end", function() {
+              thisExample.style("display", "none");
+            });
+        } else {
+          thisExample.transition()
+            .duration(1000)
+            .style("height", "0%")
+            .on("end", function() {
+              thisExample.style("display", "none");
+            });
+        }
+        source.transition()
+          .duration(1000)
+          .style("opacity", 0)
+          .on("end", function() {
+            example = example + 1;
+            setupChart();
+            // prepare chart
+            x = d3.scaleLinear()
+              .domain(d3.extent(deathData, function(d) { return d.uni; })).nice()
+              .range([margin.left, width - margin.right]);
+            xAxis = d3.axisBottom(x)
+              .ticks(5, ".0%")
+              .tickSizeOuter(0)
+              .tickSizeInner(margin.bottom + margin.top - height);
+            y = d3.scaleLog()
+              .domain([40, 500])
+              .range([height - margin.bottom, margin.top]);
+            yAxis = d3.axisLeft(y)
+              .ticks(5, ",.0f")
+              .tickSizeOuter(0)
+              .tickPadding(15);
+            yAxisGroup.select(".axisLabel")
+              .text("avoidable deaths per 100,000 people");
+            xAxisGroup.select(".axisLabel")
+              .text("university-educated adults");
+            chartTitle.text("Who's dying who shouldn't be?");
+            xAxisGroup.call(xAxis);
+            yAxisGroup.call(yAxis);
+            // circle scales
+            colour = d3.scaleLinear()
+              .domain([472, 48])
+              .range([0, 1]);
+            // draw chart
+            axisGroup.transition()
+              .duration(1000)
+              .style("opacity", 1);
+            regions = chartGroup
+              .selectAll(".region")
+                .data(deathData)
+              .enter().append("circle")
+                .classed("region", true)
+                .style("fill", function(d) { return d3.interpolatePlasma(colour(d.rate)); })
+                .attr("r", 0)
+                .attr("cx", function(d) { return x(d.uni); })
+                .attr("cy", y.range()[0]);
+            regions.transition()
+              .delay(function(d, i) { return 2000 / deathData.length * i; })
+              .duration(1000)
+              .attr("r", 8)
+              .style("opacity", .8)
+              .attr("cy", function(d) { return y(d.rate); });
+            labels = chartGroup
+              .selectAll(".label")
+                .data(deathData)
+              .enter().append("text")
+                .classed("label", true)
+                .text(function(d) { return d.region.slice(0, d.region.search(/\(/) - 1); })
+                .attr("x", function(d) { return x(d.uni); })
+                .attr("y", y.range()[0]);
+            labels.transition()
+              .delay(function(d, i) { return 2000 / deathData.length * i; })
+              .duration(1000)
+              .style("opacity", 1)
+              .attr("y", function(d) { return y(d.rate) + 15; });
+            labels.each(function(d) {
+              let coords = [x(d.uni), y(d.rate)];
+              let others = deathData.filter(function(e) { return e.region !== d.region; });
+              i = 0;
+              let visible = true;
+              dimensions = this.getBoundingClientRect();
+              if (dimensions.x < 0 || dimensions.x + dimensions.width > width) {
+                visible = false;
+              } else {
+                while (i < others.length) {
+                  let tempCoords = [x(others[i].uni), y(others[i].rate)]
+                  let link = Math.sqrt(Math.pow(d3.max([coords[0], tempCoords[0]]) - d3.min([coords[0], tempCoords[0]]), 2) + Math.pow(d3.max([coords[1], tempCoords[1]]) - d3.min([coords[1], tempCoords[1]]), 2));
+                  if (link < 60) {
+                    visible = false;
+                    break;
+                  }
+                  i++;
+                }
+              }
+              d3.select(this)
+                .classed("visible", visible);
+            });
+          });
+      }
+
+      function setupChart() {
+        margin = { top: 100, right: 100, bottom: 100, left: 150 };
+        chartGroup = canvas
+          .append("g")
+            .attr("id", "chartGroup");
+        axisGroup = canvas
+          .append("g")
+            .attr("id", "axisGroup");
+        xAxisGroup = axisGroup
+          .append("g")
+            .attr("id", "xAxisGroup")
+            .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
+        xAxisGroup.append("text")
+          .classed("axisLabel", true)
+          .attr("x", (width - margin.left - margin.right) / 2 + margin.left)
+          .attr("y", 50);
+        yAxisGroup = axisGroup
+          .append("g")
+            .attr("id", "yAxisGroup")
+            .attr("transform", "translate(" + margin.left + ", 0)");
+        yAxisGroup.append("text")
+          .classed("axisLabel", true)
+          .attr("y", margin.top - 20);
+        chartTitle = axisGroup
+          .append("text")
+            .attr("id", "chartTitle")
+            .attr("x", (width - margin.left - margin.right) / 2 + margin.left)
+            .attr("y", margin.top - 30);
+      }
+
+      function drawIris() {
+        canvas.selectAll("*")
+          .transition()
+            .duration(1000)
+            .style("opacity", 0)
+            .remove();
+        d3.timeout(function() {
+          setupChart();
+          // prepare chart
+          x = d3.scaleLinear()
+            .domain(d3.extent(irisData, function(d) { return d.petal_length; })).nice()
+            .range([margin.left, width - margin.right]);
+          xAxis = d3.axisBottom(x)
+            .ticks(5, ".0f")
+            .tickSizeOuter(0)
+            .tickSizeInner(margin.bottom + margin.top - height);
+          y = d3.scaleLinear()
+            .domain(d3.extent(irisData, function(d) { return d.petal_width; })).nice()
+            .range([height - margin.bottom, margin.top]);
+          yAxis = d3.axisLeft(y)
+            .ticks(5, ".1f")
+            .tickSizeOuter(0)
+            .tickSizeInner(margin.left + margin.right - width);
+          yAxisGroup.select(".axisLabel")
+            .text("petal width (cm)");
+          xAxisGroup.select(".axisLabel")
+            .text("petal length (cm)");
+          chartTitle.text("Identifying iris species");
+          xAxisGroup.call(xAxis);
+          yAxisGroup.call(yAxis);
+          // draw chart
+          axisGroup.transition()
+            .duration(1000)
+            .style("opacity", 1);
+          flowers = chartGroup
+            .selectAll(".flower")
+              .data(irisData)
+            .enter().append("circle")
+              .attr("class", function(d) { return d.species; })
+              .classed("flower", true)
+              .attr("r", 0)
+              .attr("cx", function(d) { return x(d.petal_length); })
+              .attr("cy", y.range()[0]);
+          flowers.transition()
+            .delay(function(d, i) { return 2000 / irisData.length * i; })
+            .duration(1000)
+            .attr("r", 8)
+            .style("opacity", .67)
+            .attr("cy", function(d) { return y(d.petal_width); });
+        }, 1000);
+        species = [ "setosa", "versicolor", "virginica"];
+        legend = canvas
+          .append("g")
+            .attr("transform", "translate(" + (width - margin.right - 50) + ", " + (height - margin.bottom - 110) + ")")
+            .classed("legend", true);
+        legend.transition()
+          .duration(1000)
+          .delay(1000)
+          .style("opacity", 1);
+        legend.selectAll(".legendItem")
+            .data(species)
+          .enter().append("text")
+            .attr("class", function(d) { return d + " legendItem"; })
+            .text(function(d) { return d; })
+            .attr("y", function(d, i) { return i * 30; });
+      }
+
+      function drawMap() {
+        canvas.selectAll("*")
+          .transition()
+            .duration(1000)
+            .style("opacity", 0)
+            .remove();
+        d3.timeout(function() {
+          mapboxgl.accessToken = "pk.eyJ1IjoibmV3cy1vbjFpbmUiLCJhIjoiR3FlZFZlVSJ9._30EFE9XYhQitqf4gzRG-g";
+          map = new mapboxgl.Map({
+            container: "map",
+            style: "mapbox://styles/mapbox/satellite-v9",
+            center: [149.126944, -35.313056],
+            maxBounds: [[148.836944, -35.613056], [149.426944, -35.063056]],
+            zoom: 10.5,
+            // pitch: 60,
+            // bearing: -30,
+            antialias: true
+          });
+          map.on("load", function() {
+            mapContainer = map.getCanvasContainer();
+            mapSvg = d3.select(mapContainer)
+              .append("svg")
+                .attr("id", "mapSvg");
+            mapSvgGroup = mapSvg
+              .append("g")
+                .attr("id", "mapSvgGroup");
+            projection = calcProjection();
+            path = d3.geoPath();
+            population = mapSvgGroup
+              .selectAll(".population")
+                .data(actDensity.features)
+              .enter().append("path")
+                .classed("population", true)
+                .style("fill", function(d) { return d.properties.fill; });
+            map.on("viewreset", render)
+              .on("move", render)
+              .on("move", render);
+            render();
+            d3.select("#map").transition()
+              .duration(1000)
+              .style("opacity", 1);
+            function render() {
+              projection = calcProjection();
+              path.projection(projection);
+              // draw SVGs
+              population.attr("d", path);
+            }
+            function calcProjection() {
+              center = map.getCenter();
+              zoom = map.getZoom();
+              scale = 256 / Math.PI * Math.pow(2, zoom);
+              return d3.geoMercator()
+                .center([center.lng, center.lat])
+                .translate([width / 2, height / 2])
+                .scale(scale);
+            }
+            // legend
+            mapLegend = d3.select("body")
+              .append("svg")
+                .attr("id", "mapLegend");
+            mapLegend.transition()
+              .duration(1000)
+              .style("opacity", 1);
+            mapLegend.append("defs")
+              .append("linearGradient")
+                .attr("id", "gradient")
+                .attr("x1", "0%")
+                .attr("x2", "0%")
+                .attr("y1", "0%")
+                .attr("y1", "100%");
+            mapLegend.append("text")
+              .attr("id", "legendLabel")
+              .attr("x", 100)
+              .attr("y", 20)
+              .text("people/sqkm");
+            mapLegend.append("rect")
+              .attr("x", "50")
+              .attr("y", "30")
+              .attr("width", "40")
+              .attr("height", height / 2 - 40);
+            legendAxisGroup = mapLegend
+              .append("g")
+                .attr("id", "legendAxisGroup")
+                .attr("transform", "translate(50, 30)");
+            mapLegend.select("#gradient")
+              .selectAll("stop")
+                .data(d3.range(11))
+              .enter().append("stop")
+                .attr("offset", function(d) { return d * 10 + "%"; })
+                .attr("style", function(d) { return "stop-color: " + d3.interpolateViridis(d / 10) + "; stop-opacity: 1;"; });
+            barHeight = height * .5 - 40;
+            legendScale = d3.scaleLog()
+              .domain([87.4, 13357.7])
+              .range([barHeight, 0]);
+            legendAxis = d3.axisLeft(legendScale)
+              .tickValues([100, 200, 500, 1000, 2000, 5000, 10000])
+              .tickFormat(d3.format(",.0f"));
+            legendAxisGroup.call(legendAxis);
+          });
+        }, 1000);
+
+      }
+
+      function switchToStreets() {
+        map.setStyle("mapbox://styles/mapbox/streets-v11");
+      }
+
+      function switchToDark() {
+        map.setStyle("mapbox://styles/mapbox/dark-v10");
+      }
+
+      function drawMapFinal() {
+        canvas.selectAll("*")
+          .transition()
+            .duration(1000)
+            .style("opacity", 0)
+            .remove();
+        d3.timeout(function() {
+          mapboxgl.accessToken = "pk.eyJ1IjoibmV3cy1vbjFpbmUiLCJhIjoiR3FlZFZlVSJ9._30EFE9XYhQitqf4gzRG-g";
+          map = new mapboxgl.Map({
+            container: "map",
+            style: "mapbox://styles/mapbox/satellite-v9",
+            center: [149.126944, -35.313056],
+            maxBounds: [[148.836944, -35.613056], [149.426944, -35.063056]],
+            zoom: 11,
+            // pitch: 60,
+            // bearing: -30,
+            antialias: true
+          });
+          map.on("load", function() {
+            map.addSource("sa1Density", {
+              type: "geojson",
+              data: actDensity
+            })
+            .addLayer({
+              "id": "act-extrusion",
+              "type": "fill-extrusion",
+              source: "sa1Density",
+              "paint": {
+                "fill-extrusion-color": ["get", "fill"],
+                "fill-extrusion-height": ["get", "density"],
+                "fill-extrusion-opacity": .67
+              }
+            });
+          });
+        }, 1000);
+      }
     </script>
   </body>
 </html>
