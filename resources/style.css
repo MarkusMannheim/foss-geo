@@ -70,10 +70,13 @@ h1, p {
 h1 {
   font-size: 2.5rem;
 }
-p {
+p, li {
   font-family: "ABCSans Regular", "Arial", sans-serif;
   font-size: 1.5rem;
   color: #FFBB00;
+}
+li {
+  text-align: left;
 }
 #narration {
   position: absolute;

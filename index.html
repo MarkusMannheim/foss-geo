@@ -68,8 +68,8 @@
           exampleData = [
             ["nyt01", "The New York Times"],
             ["nyt02", "The New York Times"],
-            ["abc01", "Australian Broadcasting Corporation"],
             ["abc02", "Australian Broadcasting Corporation"],
+            ["abc01", "Australian Broadcasting Corporation"],
             ["abc03", "Australian Broadcasting Corporation"],
           ];
           examples = container
@@ -87,7 +87,6 @@
         });
 
       function proceed() {
-        console.log("proceed()");
         click = click + 1;
         click == 1 ? drawPlanet() :
         click == 2 ? endPlanet() :
@@ -103,8 +102,7 @@
         click == 12 ? furtherDark() :
         click == 13 ? drawMapFinal() :
         click == 14 ? finalList() :
-        // click == 16 ? scatter() :
-        console.log(click);
+        console.log("presentation finished");
       }
 
       function resize() {
@@ -579,7 +577,7 @@
           .style("opacity", 0)
           .remove()
           .on("end", function() {
-            writeNarration("<h1>Markus Mannheim</h1><ul><li>ABC Canberra</li></ul>");
+            writeNarration("<h1>Open-source wish-list</h1><ul><li>support for non-coders</li><li>free data, free platforms</li><li>kill web Mercator</li></ul>");
           });
       }
     </script>
