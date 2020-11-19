@@ -1,0 +1,110 @@
+/* colour guide:
+b: #375E97
+o: #FB6542
+y: #FFBB00
+g: #3F681C
+--tint-1: #333;
+--tint-2: #666;
+--tint-3: #999;
+--tint-4: #ccc;
+--tint-5: #e6e6e6;
+--tint-6: #f2f2f2;
+*/
+@font-face {
+  font-family: "ABCSans Regular";
+  font-style: normal;
+  font-weight: normal;
+  src: local("ABCSans Regular"), url("./fonts/abcsans-regular.woff") format("woff");
+}
+@font-face {
+  font-family: "ABCSans Black";
+  font-style: normal;
+  font-weight: normal;
+  src: local("ABCSans Black"), url("./fonts/abcsans-black.woff") format("woff");
+}
+:root {
+  font-size: 1em;
+  font-family: "ABCSans Black", "Arial Black", sans-serif;
+}
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+#container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#clickCover {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+#canvas {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+#sphere {
+  fill: none;
+}
+#graticule {
+  fill: none;
+  stroke: #333;
+  stroke-dasharray: 3 3;
+}
+#land {
+  fill: #ccc;
+}
+h1, p {
+  margin: 0;
+}
+h1 {
+  font-size: 2.5rem;
+}
+p {
+  font-family: "ABCSans Regular", "Arial", sans-serif;
+  font-size: 1.5rem;
+  color: #FFBB00;
+}
+#narration {
+  position: absolute;
+  text-align: center;
+  color: white;
+  background: #333;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 2px 2px 5px #666;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.example {
+  display: none;
+}
+#source {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+/*   font-size: 1.25rem; */
+  color: white;
+  background: #333;
+  padding: 5px 10px;
+  border-radius: 10px;
+  opacity: 0;
+  font-family: "ABCSans Regular", "Arial", sans-serif;
+  box-shadow: 1px 1px 3px #666;
+}
+#source span {
+  color: #e6e6e6;
+}

@@ -1,0 +1,437 @@
+// intro
+function intro() {
+  console.log("intro()");
+  markus = d3.select("#markus");
+  caption = d3.select(".caption");
+  markus.attr("src", "../resources/images/markus.jpg")
+    .style("display", "block")
+    .transition()
+      .duration(pause)
+        .style("width", "250px")
+        .style("height", "250px");
+  caption.style("display", "block")
+    .transition()
+    .delay(pause)
+    .duration(pause)
+    .style("opacity", 1);
+  spinPhotoLoop = d3.interval(spinPhoto, pause * 4);
+
+  function spinPhoto() {
+    markus.transition()
+      .duration(pause / 2)
+      .ease(d3.easeQuadIn)
+      .tween("style", function() {
+        return function(t) {
+          markus.style("transform", "rotateY(" + (90 * t) + "deg)");
+        };
+      })
+      .transition()
+        .attr("src", "../resources/images/abc.jpg")
+        .duration(pause / 2)
+        .ease(d3.easeQuadOut)
+        .tween("style", function() {
+          return function(t) {
+            markus.style("transform", "rotateY(" + (90 * t + 90) + "deg)");
+          };
+        })
+      .transition()
+        .duration(pause / 2)
+        .ease(d3.easeQuadIn)
+        .tween("style", function() {
+          return function(t) {
+            markus.style("transform", "rotateY(" + (180 - 90 * t) + "deg)");
+          };
+        })
+      .transition()
+        .attr("src", "../resources/images/markus.jpg")
+        .duration(pause / 2)
+        .ease(d3.easeQuadOut)
+        .tween("style", function() {
+          return function(t) {
+            markus.style("transform", "rotateY(" + (90 - 90 * t) + "deg)");
+          };
+        });
+  }
+}
+
+function mistakes() {
+  spinPhotoLoop.stop();
+
+  base.selectAll("*")
+    .transition()
+      .duration(pause)
+      .style("opacity", 0)
+    .remove();
+
+  d3.timeout(function() {
+    base.append("h1")
+      .style("opacity", 0)
+      .text("Dataviz crimes")
+      .transition()
+        .duration(pause)
+        .style("opacity", 1);
+    base.append("p")
+      .classed("hidden", true)
+      .text("complexity");
+    base.append("p")
+      .classed("hidden", true)
+      .text("style over substance");
+    base.append("p")
+      .classed("hidden", true)
+      .text("pie charts");
+  }, pause * 1.5);
+}
+
+function examples() {
+  base.selectAll("*")
+    .transition()
+      .duration(pause)
+      .style("opacity", 0)
+    .remove();
+  d3.timeout(function() {
+    base.append("img")
+      .attr("src", "../resources/images/newspoll.jpg")
+      .classed("hidden", true);
+    base.append("img")
+      .attr("src", "../resources/images/complex2.jpg")
+      .classed("hidden", true);
+    base.append("img")
+      .attr("src", "../resources/images/complex1.png")
+      .classed("hidden", true);
+    base.append("img")
+      .attr("src", "../resources/images/style2.jpg")
+      .classed("hidden", true);
+    base.append("img")
+      .attr("src", "../resources/images/style.png")
+      .classed("hidden", true);
+    base.append("img")
+      .attr("src", "../resources/images/treemap.png")
+      .classed("hidden", true);
+    base.append("img")
+      .attr("src", "../resources/images/3d.jpg")
+      .classed("hidden", true);
+    base.append("img")
+      .attr("src", "../resources/images/pie3d.jpg")
+      .classed("hidden", true);
+    showImage();
+  }, pause * 1.5);
+}
+
+function showImage() {
+  base.select("img.hidden")
+    .style("opacity", 0)
+    .classed("hidden", false)
+    .each(function() {
+      if (this.getBoundingClientRect().width / 16 * 9 > this.getBoundingClientRect().height) {
+        d3.select(this)
+          .style("width", "0px")
+          .style("opacity", 1)
+          .transition()
+            .duration(pause)
+            .style("width", (width * .9) + "px");
+      } else {
+        d3.select(this)
+          .style("height", "0px")
+          .style("opacity", 1)
+          .transition()
+            .duration(pause)
+            .style("height", (height * .9) + "px");
+      }
+    });
+  d3.timeout(function() {
+    base.select("img")
+    .classed("showing", true);
+  }, pause);
+}
+
+function removeImage() {
+  base.select("img.showing")
+    .transition()
+      .duration(pause)
+      .style("width", "0px")
+      .style("height", "0px")
+    .remove();
+  d3.timeout(function() {
+    showImage();
+  }, pause);
+}
+
+function resize() {
+  console.log("resize()");
+  let dimensions = document.getElementById("container").getBoundingClientRect();
+  width = dimensions.width;
+  height = dimensions.height;
+  console.log(width, height);
+}
+
+function removeHidden() {
+  base.select("p.hidden")
+    .transition()
+      .duration(pause)
+      .style("opacity", 1);
+  d3.timeout(function() {
+    base.select("p.hidden")
+      .classed("hidden", false);
+  }, pause);
+}
+
+function bestPractice() {
+  base.select("img.showing")
+    .transition()
+      .duration(pause)
+      .style("width", "0px")
+      .style("height", "0px")
+    .remove();
+  d3.timeout(function() {
+    pieChart();
+  }, pause);
+}
+
+function pieChart() {
+  d3.csv("../resources/votes.csv")
+    .then(function(data) {
+      voteData = data
+        .map(function(d) {
+          d.vote = +d.vote / 100;
+          return d;
+        });
+      canvas = base
+        .append("svg")
+          .attr("id", "canvas")
+          .style("width", (width * .75)+ "px")
+          .style("height", (height * .75)+ "px");
+      canvasWidth = width * .75;
+      canvasHeight = height * .75;
+      arc = d3.arc()
+        .innerRadius(canvasHeight / 4)
+        .outerRadius(canvasHeight / 2)
+        .cornerRadius(canvasHeight / 32);
+      pie = d3.pie()
+        .value(function(d) { return d.vote; })
+        .startAngle(-Math.PI / 2);
+      title = base
+        .append("h1")
+          .attr("id", "title")
+          .text("2019 federal election");
+      title.transition()
+        .duration(pause)
+        .style("opacity", 1);
+      barChart = canvas
+        .append("g")
+          .attr("id", "barChart");
+      pieChart = canvas
+        .append("g")
+          .attr("id", "pieChart")
+          .attr("transform", "translate(" + (canvasWidth / 2) + ", " + (canvasHeight / 2) + ")");
+      d3.timeout(function() {
+        arcs = pieChart
+          .selectAll(".arc")
+            .data(pie(voteData))
+          .enter().append("g")
+            .attr("class", function(d) { return d.data.party.toLowerCase(); })
+            .classed("arc", true);
+        arcs.append("path")
+          .transition()
+            .duration(pause)
+            .delay(function(d, i) { return i * pause / 4; })
+            .attrTween("d", function(d) {
+              let i = d3.interpolate(d.startAngle, d.endAngle);
+              return function(t) {
+                d.endAngle = i(t);
+                return arc(d);
+              };
+            });
+        labels = arcs
+          .append("text")
+            .classed("label", true)
+            .attr("x", function(d) { return arc.centroid(d)[0];})
+            .attr("y", function(d) { return arc.centroid(d)[1] + 12;})
+            .text(function(d) { return d.data.party + ": " + d3.format(".1%")(d.value); });
+        labels.transition()
+          .delay(pause)
+          .duration(pause)
+          .style("opacity", 1);
+      }, pause);
+    });
+}
+
+function bars() {
+  margin = { top: 0, right: 32, bottom: 32, left: 32 };
+  x = d3.scaleLinear()
+    .domain([0, 1])
+    .range([margin.left, margin.left]);
+  y = d3.scaleBand()
+    .domain(voteData.map(function(d) { return d.party; }))
+    .range([margin.top, canvasHeight - margin.bottom])
+    .padding(.2);
+  axisGroup = barChart
+    .append("g")
+      .attr("id", "axisGroup")
+      .attr("transform", "translate(0, " + (canvasHeight - margin.bottom) + ")");
+  axis = d3.axisBottom(x)
+    .ticks(5, ".0%");
+  axisGroup.call(axis);
+  x.range([margin.left, canvasWidth - margin.right]);
+  axisGroup.transition()
+    .duration(pause)
+    .style("opacity", 1)
+    .call(axis);
+  bars = barChart
+    .selectAll(".bar")
+      .data(voteData)
+    .enter().append("g")
+      .classed("bar", true);
+  bars.append("rect")
+    .classed("background", true)
+    .attr("x", x(0))
+    .attr("height", y.bandwidth())
+    .attr("y", function(d) { return y(d.party); })
+    .attr("width", 0)
+  .transition()
+    .duration(pause)
+    .delay(pause)
+    .attr("width", x(1) - x(0));
+  arcs.select("path")
+    .transition()
+      .delay(pause * 2)
+      .duration(pause)
+      .attrTween("d", function(d) {
+        let i = d3.interpolate(d.endAngle, d.startAngle);
+        return function(t) {
+          d.endAngle = i(t);
+          return arc(d);
+        };
+      });
+  arcs.select(".label")
+    .transition()
+      .duration(pause)
+      .delay(pause * 2)
+      .style("opacity", 0);
+  arcs.transition()
+    .delay(pause * 3)
+    .remove();
+  bars.append("rect")
+    .attr("class", function(d) { return d.party.toLowerCase(); })
+    .classed("realBar", true)
+    .attr("x", x(0))
+    .attr("height", y.bandwidth())
+    .attr("y", function(d) { return y(d.party); })
+    .attr("width", 0)
+  .transition()
+    .duration(pause)
+    .delay(pause * 2)
+    .attr("width", function(d) { return x(d.vote) - x(0); });
+  bars.append("text")
+    .classed("label", true)
+    .classed("newLabel", true)
+    .text(function(d) { return d.party + ": " + d3.format(".1%")(d.vote); })
+    .attr("x", x(.02))
+    .attr("y", function(d) { return y(d.party) + y.bandwidth() / 2 + 12; })
+  .transition()
+    .delay(pause * 3)
+    .duration(pause)
+    .style("opacity", 1);
+}
+
+function scatter() {
+  d3.selectAll("#title, #pieChart, #barChart")
+    .transition()
+      .duration(pause)
+      .style("opacity", 0)
+    .remove();
+  d3.timeout(function() {
+    plot();
+  }, pause);
+}
+
+function plot() {
+  d3.csv("../resources/iris.csv")
+    .then(function(data) {
+      irisData = data
+        .map(function(d) {
+          for (i in d3.keys(d)) {
+            if (d3.keys(d)[i] !== "species") d[d3.keys(d)[i]] = +d[d3.keys(d)[i]];
+          }
+          return d;
+        });
+      title = base
+        .append("h1")
+          .attr("id", "title")
+          .text("Iris species identification");
+      title.transition()
+        .duration(pause)
+        .style("opacity", 1);
+      margin = { top: 16, right: 16, bottom: 64, left: 164 };
+      scatterChart = canvas
+        .append("g")
+          .attr("id", "scatterChart");
+      xAxisGroup = scatterChart
+        .append("g")
+          .attr("id", "xAxisGroup")
+          .attr("transform", "translate(0, " + (canvasHeight - margin.bottom) + ")");
+      yAxisGroup = scatterChart
+        .append("g")
+          .attr("id", "yAxisGroup")
+          .attr("transform", "translate(" + margin.left + ", 0)");
+      x = d3.scaleLinear()
+        .domain([0, d3.max(irisData, function(d) { return d.petal_length; })]).nice()
+        .range([margin.left, margin.left]);
+      y = d3.scaleLinear()
+        .domain([0 ,d3.max(irisData, function(d) { return d.petal_width; })]).nice()
+        .range([canvasHeight - margin.bottom, canvasHeight - margin.bottom]);
+      xAxis = d3.axisBottom(x)
+        .ticks(5, ".0f")
+        .tickPadding(12)
+        .tickSizeOuter(0)
+        .tickSizeInner(margin.bottom + margin.top - canvasHeight);
+      yAxis = d3.axisLeft(y)
+        .ticks(5, ".1f")
+        .tickSizeOuter(0)
+        .tickPadding(12)
+        .tickSizeInner(margin.left + margin.right - canvasWidth);
+      xAxisGroup.call(xAxis);
+      yAxisGroup.call(yAxis);
+      x.range([margin.left, canvasWidth - margin.right]);
+      y.range([canvasHeight - margin.bottom, margin.top]);
+      xLabel = xAxisGroup
+        .append("text")
+          .classed("axisLabel", true)
+          .text("petal length (cm)")
+          .attr("x", (canvasWidth - margin.right - margin.left) / 2 + margin.left)
+          .attr("y", 48)
+          .style("text-anchor", "middle");
+      yLabel = yAxisGroup
+        .append("text")
+          .classed("axisLabel", true)
+          .text("petal width (cm)")
+          .attr("x", -20)
+          .attr("y", (canvasHeight - margin.top - margin.bottom) / 2 + margin.top)
+          .style("text-anchor", "end");
+      d3.selectAll(".axisLabel")
+        .transition()
+          .delay(pause)
+          .duration(pause)
+          .style("opacity", 1);
+      xAxisGroup.transition()
+        .duration(pause)
+        .style("opacity", 1)
+        .call(xAxis);
+      yAxisGroup.transition()
+        .duration(pause)
+        .style("opacity", 1)
+        .call(yAxis);
+      dots = scatterChart
+        .selectAll(".iris")
+          .data(irisData)
+        .enter().append("circle")
+          .attr("class", function(d) { return d.species; })
+          .classed("iris", true)
+          .attr("r", 0)
+          .attr("cx", function(d) { return x(d.petal_length); })
+          .attr("cy", function(d) { return y(d.petal_width); });
+      dots.transition()
+        .delay(function(d, i) { return pause + pause / irisData.length * i; })
+        .duration(pause)
+        .attr("r", 7.5);
+    });
+}

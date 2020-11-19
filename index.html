@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-155991615-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-155991615-1');
+    </script>
+    <!-- my stuff -->
+    <meta charset="utf-8">
+    <title>Geodata</title>
+    <meta name="description" content="What users of geodata-visualisation tools want.">
+    <meta name="keywords" content="foss, geodata, data, visualisation, dataviz">
+    <meta name="author" content="Markus Mannheim">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Initial scripts -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <link href="./resources/style.css" rel="stylesheet">
+    <link href="./resources/abcLogo64.png" rel="icon">
+  </head>
+
+  <body>
+    <!-- Initial page layout -->
+    <div id="container"></div>
+    <svg id="canvas"></svg>
+    <div id="narration"></div>
+    <div id="source"></div>
+    <div id="clickCover" onclick="proceed()"></div>
+    <script>
+      // load data
+      Promise.all([
+        d3.json("./resources/data/world.topojson"),
+        d3.csv("./resources/data/education.csv"),
+        d3.csv("./resources/data/iris.csv")
+      ]).then(function(data) {
+          // format data
+          worldData = topojson.feature(data[0], data[0].objects.countries);
+          educationData = data[1]
+            .map(function(d) {
+              d.rate = +d.rate;
+              d.uni = +d.uni;
+              return d;
+            });
+          irisData = data[2]
+            .map(function(d) {
+              let keys = Object.keys(d);
+              for (key in keys) {
+                if (keys[key] !== "species") d[keys[key]] = +d[keys[key]];
+              }
+              return d;
+            });
+          // page elements
+          container = d3.select("#container");
+          canvas = d3.select("#canvas");
+          narration = d3.select("#narration");
+          source = d3.select("#source");
+          clickCover = d3.select("#clickCover");
+          // load example data;
+          exampleData = [
+            ["nyt01", "The New York Times"],
+            ["nyt02", "The New York Times"],
+            ["abc01", "Australian Broadcasting Corporation"],
+            ["abc02", "Australian Broadcasting Corporation"],
+            ["abc03", "Australian Broadcasting Corporation"],
+          ];
+          examples = container
+            .selectAll(".example")
+              .data(exampleData)
+            .enter().append("img")
+              .classed("example", true)
+              .attr("src", function(d) { return "./resources/images/" + d[0]+ ".png"; });
+
+          // collect page dimensions
+          window.addEventListener("resize", resize);
+          resize();
+          pause = 1500;
+          click = 0;
+        });
+
+      function proceed() {
+        console.log("proceed()");
+        click = click + 1;
+        click == 1 ? drawPlanet() :
+        click == 2 ? endPlanet() :
+        click == 3 ? nextExample() :
+        click == 4 ? nextExample() :
+        click == 5 ? nextExample() :
+        click == 6 ? nextExample() :
+        // click == 12 ? removeImage() :
+        // click == 13 ? removeImage() :
+        // click == 14 ? bestPractice() :
+        // click == 15 ? bars() :
+        // click == 16 ? scatter() :
+        console.log(click);
+      }
+
+      function resize() {
+        let dimensions = document.getElementById("container").getBoundingClientRect();
+        width = dimensions.width;
+        height = dimensions.height;
+        console.log(width, height);
+      }
+
+      function drawPlanet() {
+        rotate = [0, 0];
+        projection = d3.geoOrthographic()
+          .translate([width / 2, height / 2])
+          .rotate(rotate)
+          .fitExtent([[50, 50], [width - 50 , height - 50]], {type: "Sphere"});
+        maxScale = projection.scale();
+        projection.scale(0);
+        path = d3.geoPath()
+          .projection(projection);
+        planet = canvas
+          .append("g")
+            .attr("id", "planet");
+        sphere = planet
+          .append("path")
+            .datum({type: "Sphere"})
+            .attr("id", "sphere");
+        graticule = planet
+          .append("path")
+            .datum(d3.geoGraticule())
+            .attr("id", "graticule");
+        land = planet
+          .append("path")
+            .datum(worldData)
+            .attr("id", "land");
+
+        planetSpin = d3.timer(function(t) {
+          let scale = t > 7500 ? maxScale : t / 7500 * maxScale;
+          projection.rotate([rotate[0] + t / 50, rotate[1] - t / 100])
+            .scale(scale);
+          planet.selectAll("path")
+            .attr("d", path);
+        });
+
+        writeNarration("<h1>Markus Mannheim</h1><p>data journalist</p><p>ABC Canberra</p>");
+      }
+
+      function writeNarration(html) {
+        narration.html(html)
+          .transition()
+            .delay(1000)
+            .duration(1000)
+            .style("opacity", 1);
+      }
+
+      function endPlanet() {
+        planet.transition()
+          .duration(2000)
+          .style("opacity", 0)
+          .remove();
+        narration.transition()
+          .duration(2000)
+          .style("opacity", 0)
+          .on("end", function() {
+            narration.selectAll("*")
+              .remove();
+            example = 0;
+            showExample();
+          });
+      }
+
+      function showExample() {
+        ratio = width / height;
+        thisExample = examples
+          .filter(function(d, i) { return i == example; });
+        if (thisExample.node().naturalWidth / thisExample.node().naturalHeight > ratio) {
+          thisExample.style("width", "0%")
+            .style("display", "block")
+            .transition()
+              .duration(1000)
+              .style("width", "90%");
+        } else {
+          thisExample.style("height", "0%")
+            .style("display", "block")
+            .transition()
+              .duration(1000)
+              .style("height", "90%");
+        }
+        source.html("<span>source:</span> " + exampleData[example][1])
+          .transition()
+            .duration(1000)
+            .style("opacity", 1);
+      }
+
+      function nextExample() {
+        if (thisExample.node().naturalWidth / thisExample.node().naturalHeight > ratio) {
+          thisExample.transition()
+            .duration(1000)
+            .style("width", "0%")
+            .on("end", function() {
+              thisExample.style("display", "none");
+            });
+        } else {
+          thisExample.transition()
+            .duration(1000)
+            .style("height", "0%")
+            .on("end", function() {
+              thisExample.style("display", "none");
+            });
+        }
+        source.transition()
+          .duration(1000)
+          .style("opacity", 0)
+          .on("end", function() {
+            example = example + 1;
+            showExample();
+          });
+      }
+
+    </script>
+  </body>
+</html>
