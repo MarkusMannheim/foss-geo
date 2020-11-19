@@ -100,7 +100,9 @@
         click == 9 ? drawMap() :
         click == 10 ? switchToStreets() :
         click == 11 ? switchToDark() :
-        // click == 15 ? bars() :
+        click == 12 ? furtherDark() :
+        click == 13 ? drawMapFinal() :
+        click == 14 ? finalList() :
         // click == 16 ? scatter() :
         console.log(click);
       }
@@ -439,8 +441,6 @@
             center: [149.126944, -35.313056],
             maxBounds: [[148.836944, -35.613056], [149.426944, -35.063056]],
             zoom: 10.5,
-            // pitch: 60,
-            // bearing: -30,
             antialias: true
           });
           map.on("load", function() {
@@ -536,25 +536,20 @@
         map.setStyle("mapbox://styles/mapbox/dark-v10");
       }
 
+      function furtherDark() {
+        map.style.stylesheet.layers.forEach(function(layer) {
+          if (layer.type == "symbol" || layer.type == "line") {
+            map.removeLayer(layer.id);
+          }
+        });
+      }
+
       function drawMapFinal() {
-        canvas.selectAll("*")
-          .transition()
-            .duration(1000)
-            .style("opacity", 0)
-            .remove();
-        d3.timeout(function() {
-          mapboxgl.accessToken = "pk.eyJ1IjoibmV3cy1vbjFpbmUiLCJhIjoiR3FlZFZlVSJ9._30EFE9XYhQitqf4gzRG-g";
-          map = new mapboxgl.Map({
-            container: "map",
-            style: "mapbox://styles/mapbox/satellite-v9",
-            center: [149.126944, -35.313056],
-            maxBounds: [[148.836944, -35.613056], [149.426944, -35.063056]],
-            zoom: 11,
-            // pitch: 60,
-            // bearing: -30,
-            antialias: true
-          });
-          map.on("load", function() {
+        mapSvg.transition()
+          .duration(1000)
+          .style("opacity", 0)
+          .remove()
+          .on("end", function() {
             map.addSource("sa1Density", {
               type: "geojson",
               data: actDensity
@@ -569,8 +564,23 @@
                 "fill-extrusion-opacity": .67
               }
             });
+            d3.timeout(function() {
+              map.easeTo({pitch: 45});
+            }, 2000);
+            d3.timeout(function() {
+              map.easeTo({bearing: -30});
+            }, 4000);
           });
-        }, 1000);
+      }
+
+      function finalList() {
+        d3.select("#map, #mapLegend").transition()
+          .duration(1000)
+          .style("opacity", 0)
+          .remove()
+          .on("end", function() {
+            writeNarration("<h1>Markus Mannheim</h1><ul><li>ABC Canberra</li></ul>");
+          });
       }
     </script>
   </body>
