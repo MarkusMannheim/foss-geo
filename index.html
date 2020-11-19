@@ -572,13 +572,13 @@
       }
 
       function finalList() {
-        d3.select("#map, #mapLegend").transition()
+        d3.selectAll("#map, #mapLegend").transition()
           .duration(1000)
           .style("opacity", 0)
-          .remove()
-          .on("end", function() {
-            writeNarration("<h1>Open-source wish-list</h1><ul><li>support for non-coders</li><li>free data, free platforms</li><li>kill web Mercator</li></ul>");
-          });
+          .remove();
+        d3.timeout(function() {
+          writeNarration("<h1>Open-source wish-list</h1><ul><li>support for non-coders</li><li>free data, free platforms</li><li>kill web Mercator</li></ul>");
+        }, 1000);
       }
     </script>
   </body>
